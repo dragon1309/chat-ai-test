@@ -19,6 +19,8 @@ export interface Message {
     tokensUsed?: number;
   };
   createdAt: string;
+  type?: "text" | "image";
+  imageUrl?: string;
 }
 
 export interface Conversation {
@@ -30,7 +32,7 @@ export interface Conversation {
 
 export interface SendMessageData {
   content: string;
-  attachments?: string[];
+  attachments?: Attachment[];
 }
 
 export interface UploadedFile {
@@ -40,5 +42,26 @@ export interface UploadedFile {
   mimeType: string;
   size: number;
   url: string;
+  extractedText?: string;
   file?: File;
+}
+
+export type AIMode = "chat" | "generate" | "describe";
+
+export interface GeneratedImage {
+  imageUrl: string;
+  revisedPrompt: string;
+  metadata: {
+    provider: string;
+    model: string;
+  };
+}
+
+export interface ImageDescription {
+  description: string;
+  metadata: {
+    provider: string;
+    model: string;
+    tokensUsed?: number;
+  };
 }

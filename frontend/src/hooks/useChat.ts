@@ -1,60 +1,37 @@
 import { useState, useEffect } from "react";
-import { Message } from "../types";
-import { getConversations } from "../api/conversations";
+import { Message, AIMode, GeneratedImage, ImageDescription } from "../types";
 import { getMessages, sendMessage as sendMessageAPI } from "../api/messages";
+import { generateImage, describeImage } from "../api/images";
 
 export function useChat() {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversationId, setConversationId] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aiMode, setAiMode] = useState<AIMode>("chat");
 
-  // Load conversation and messages on mount
+  // Load messages on mount
   useEffect(() => {
-    loadConversation();
+    loadMessages();
   }, []);
 
-  const loadConversation = async () => {
+  const loadMessages = async () => {
     try {
-      const { conversations } = await getConversations();
-      if (conversations && conversations.length > 0) {
-        const conv = conversations[0];
-        setConversationId(conv._id);
-        await loadMessages(conv._id);
-      } else {
-        setConversationId("1");
-      }
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const loadMessages = async (convId: string) => {
-    try {
-      const { messages: msgs } = await getMessages(convId);
+      const { messages: msgs } = await getMessages();
       setMessages(msgs);
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  const sendMessage = async (content: string, attachments?: string[]) => {
-    if (!conversationId) {
-      setError("No conversation available");
-      return;
-    }
-
+  const sendMessage = async (content: string, attachments?: any[]) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const { userMessage, assistantMessage } = await sendMessageAPI(
-        conversationId,
-        {
-          content,
-          attachments,
-        },
-      );
+      const { userMessage, assistantMessage } = await sendMessageAPI({
+        content,
+        attachments,
+      });
 
       setMessages((prev) => [...prev, userMessage, assistantMessage]);
     } catch (err: any) {
@@ -64,12 +41,122 @@ export function useChat() {
     }
   };
 
+  const handleGenerateImage = async (
+    prompt: string,
+  ): Promise<GeneratedImage | null> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await generateImage({
+        prompt,
+      });
+
+      // Use saved messages from backend
+      if (result.userMessage && result.assistantMessage) {
+        const userMsg = result.userMessage;
+        const assistantMsg = result.assistantMessage;
+        setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      } else {
+        // Fallback: Create user message with the prompt
+        const userMessage: Message = {
+          _id: `user-${Date.now()}`,
+          conversationId: "default-conversation",
+          role: "user",
+          content: prompt,
+          attachments: [],
+          createdAt: new Date().toISOString(),
+          type: "text",
+        };
+
+        // Create assistant message with the generated image
+        const assistantMessage: Message = {
+          _id: `assistant-${Date.now()}`,
+          conversationId: "default-conversation",
+          role: "assistant",
+          content: `Here's the image generated from your prompt: "${result.revisedPrompt}"`,
+          attachments: [],
+          createdAt: new Date().toISOString(),
+          type: "image",
+          imageUrl: result.imageUrl,
+        };
+
+        setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      }
+
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDescribeImage = async (
+    imageUrl: string,
+    question?: string,
+  ): Promise<ImageDescription | null> => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const result = await describeImage({
+        imageUrl,
+        question,
+      });
+
+      // Use saved messages from backend
+      if (result.userMessage && result.assistantMessage) {
+        const userMsg = result.userMessage;
+        const assistantMsg = result.assistantMessage;
+        setMessages((prev) => [...prev, userMsg, assistantMsg]);
+      } else {
+        // Fallback: Create user message with the image
+        const userMessage: Message = {
+          _id: `user-${Date.now()}`,
+          conversationId: "default-conversation",
+          role: "user",
+          content: question || "Describe this image",
+          attachments: [],
+          createdAt: new Date().toISOString(),
+          type: "image",
+          imageUrl,
+        };
+
+        // Create assistant message with the description
+        const assistantMessage: Message = {
+          _id: `assistant-${Date.now()}`,
+          conversationId: "default-conversation",
+          role: "assistant",
+          content: result.description,
+          attachments: [],
+          createdAt: new Date().toISOString(),
+          type: "text",
+          metadata: result.metadata,
+        };
+
+        setMessages((prev) => [...prev, userMessage, assistantMessage]);
+      }
+
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     messages,
-    conversationId,
     isLoading,
     error,
+    aiMode,
+    setAiMode,
     sendMessage,
+    generateImage: handleGenerateImage,
+    describeImage: handleDescribeImage,
   };
 }
 

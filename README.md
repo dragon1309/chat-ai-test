@@ -1,20 +1,24 @@
 # AI Chat Module - Fullstack Application
 
-A fullstack AI chat application built with React, TypeScript, Node.js, Express, MongoDB, and OpenAI. Features a clean UI inspired by Template.net with support for file uploads, text extraction, and persistent chat history.
+A fullstack AI chat application built with React, TypeScript, Node.js, Express, MongoDB, and OpenAI. Features a clean UI inspired by Template.net with support for file uploads, text extraction, image generation, image description, and persistent chat history.
 
 ![Template.net Style Chat Interface](https://via.placeholder.com/800x400?text=AI+Chat+Module)
 
 ## Features
 
-- 🤖 **OpenAI Integration** - Real AI responses using OpenAI API
+- 🤖 **OpenAI Integration** - Real AI responses using GPT-4 and GPT-3.5-turbo
+- 🎨 **Image Generation** - Create images from text prompts using DALL-E 3
+- 👁️ **Image Description** - Analyze and describe uploaded images using GPT-4 Vision
 - 💬 **Multiline Chat Input** - Support for complex messages with Shift+Enter
 - 📎 **File Upload Support** - Upload txt, md, pdf, docx, png, jpg, jpeg files
 - 📄 **Text Extraction** - Automatically extract text from documents for AI context
-- 🖼️ **Image Preview** - Display uploaded images in chat messages
+- 🖼️ **Image Preview** - Display uploaded images in chat messages with lightbox view
 - 💾 **Persistent History** - All conversations stored in MongoDB
 - 🎨 **Template.net UI** - Clean, modern interface matching Template.net design
 - ⚡ **Auto-scroll** - Automatically scroll to newest messages
-- 🔄 **Loading States** - Visual feedback during AI response generation
+- 🔄 **Loading States** - Visual feedback with custom spinning loading icon during AI response generation
+- 🧠 **Smart Mode Detection** - Automatically detects AI mode based on keywords and attachment types
+- 📱 **Responsive Design** - Optimized layouts for desktop with custom breakpoints
 
 ## Tech Stack
 
@@ -24,12 +28,13 @@ A fullstack AI chat application built with React, TypeScript, Node.js, Express, 
 - Vite (build tool)
 - Tailwind CSS (styling)
 - Axios (HTTP client)
+- Custom SVG icons and animations
 
 ### Backend
 
 - Node.js + Express + TypeScript
 - MongoDB + Mongoose (database)
-- OpenAI API (AI responses)
+- OpenAI API (AI responses, image generation, vision)
 - Multer (file uploads)
 - pdf-parse (PDF text extraction)
 - mammoth (DOCX text extraction)
@@ -49,7 +54,14 @@ A fullstack AI chat application built with React, TypeScript, Node.js, Express, 
 │   │   ├── config/            # Configuration files
 │   │   ├── models/            # Mongoose schemas
 │   │   ├── routes/            # API endpoints
+│   │   │   ├── messages.ts     # Message and chat endpoints
+│   │   │   ├── uploads.ts       # File upload endpoint
+│   │   │   └── images.ts        # Image generation and description endpoints
 │   │   ├── services/          # Business logic
+│   │   │   ├── openaiService.ts # OpenAI integration
+│   │   │   ├── messageService.ts # Message operations
+│   │   │   ├── conversationService.ts # Conversation operations
+│   │   │   └── uploadService.ts # File upload handling
 │   │   ├── middleware/        # Express middleware
 │   │   ├── utils/             # Utility functions
 │   │   ├── types/             # TypeScript types
@@ -61,15 +73,30 @@ A fullstack AI chat application built with React, TypeScript, Node.js, Express, 
 ├── frontend/                   # Frontend application
 │   ├── src/
 │   │   ├── api/               # API client layer
-│   │   ├── components/        # React components (in App.tsx)
+│   │   │   ├── messages.ts     # Message API client
+│   │   │   ├── uploads.ts      # Upload API client
+│   │   │   └── images.ts       # Image API client
+│   │   ├── components/        # React components
+│   │   │   ├── index.ts       # Component exports
+│   │   │   ├── Header.tsx     # Header with logo and controls
+│   │   │   ├── Sidebar.tsx    # Navigation sidebar
+│   │   │   ├── MessageList.tsx # Scrollable message container
+│   │   │   ├── Message.tsx     # Individual message component
+│   │   │   ├── InputArea.tsx  # Input field and buttons
+│   │   │   ├── FileChip.tsx   # File attachment chip
+│   │   │   └── Icon.tsx       # Custom SVG icon component
 │   │   ├── hooks/             # Custom React hooks
+│   │   │   ├── useChat.ts     # Chat functionality hook
+│   │   │   └── useFileUpload.ts # File upload hook
 │   │   ├── types/             # TypeScript types
+│   │   ├── assets/           # Static assets
+│   │   │   ├── icon-navigation.svg
+│   │   │   ├── loading-icon.svg
+│   │   │   └── favicon.svg
 │   │   ├── App.tsx            # Main app component
 │   │   ├── main.tsx           # Entry point
-│   │   └── index.css          # Global styles
+│   │   └── index.css          # Global styles with animations
 │   └── package.json
-│
-├── plans/                      # Architecture documentation
 └── README.md                   # This file
 ```
 
@@ -195,15 +222,41 @@ http://localhost:5173
    - Type your message (optional)
    - Click "Generate"
 
+### Auto Mode Detection
+
+The application automatically detects the appropriate AI mode based on your input:
+
+- **Text Chat Mode**: Activated when typing general questions or text
+- **Image Generation Mode**: Activated when using keywords like:
+  - "generate", "create", "draw", "make image", "show me"
+  - Words starting with: "generate", "create", "draw", "make"
+- **Image Description Mode**: Activated when:
+  - Uploading images (.png, .jpg, .jpeg, .gif, .webp)
+  - Asking to describe, explain, or analyze images
+
 ### Supported File Types
 
-| Type      | Extensions              | Text Extraction       |
-| --------- | ----------------------- | --------------------- |
-| Text      | `.txt`, `.md`           | ✅ Yes                |
-| Documents | `.pdf`, `.docx`         | ✅ Yes                |
-| Images    | `.png`, `.jpg`, `.jpeg` | ❌ No (metadata only) |
+| Type      | Extensions              | Text Extraction  | AI Processing          |
+| --------- | ----------------------- | ---------------- | ---------------------- |
+| Text      | `.txt`, `.md`           | ✅ Yes           | ✅ Included in context |
+| Documents | `.pdf`, `.docx`         | ✅ Yes           | ✅ Included in context |
+| Images    | `.png`, `.jpg`, `.jpeg` | ❌ Metadata only | ✅ GPT-4 Vision desc.  |
 
 **Maximum File Size:** 10MB per file
+
+### Image Generation
+
+1. Type a prompt like "Generate an image of a sunset over mountains"
+2. The AI will automatically detect image generation mode
+3. Click "Generate" to create the image
+4. The generated image will appear in the chat
+
+### Image Description
+
+1. Upload an image using the plus (+) button
+2. Ask questions about the image like "Describe this image"
+3. The AI will use GPT-4 Vision to analyze and describe the image
+4. Responses are based on the actual image content
 
 ### File Upload Flow
 
@@ -226,34 +279,10 @@ http://localhost:3000/api
 
 ### Endpoints
 
-#### Get Conversations
-
-```http
-GET /conversations
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "data": {
-    "conversations": [
-      {
-        "_id": "...",
-        "title": "Default Conversation",
-        "createdAt": "2026-03-26T07:00:00.000Z",
-        "updatedAt": "2026-03-26T07:00:00.000Z"
-      }
-    ]
-  }
-}
-```
-
 #### Get Messages
 
 ```http
-GET /conversations/:conversationId/messages
+GET /messages
 ```
 
 **Response:**
@@ -265,7 +294,7 @@ GET /conversations/:conversationId/messages
     "messages": [
       {
         "_id": "...",
-        "conversationId": "...",
+        "conversationId": "default-conversation",
         "role": "user",
         "content": "Hello!",
         "attachments": [],
@@ -279,7 +308,7 @@ GET /conversations/:conversationId/messages
 #### Send Message
 
 ```http
-POST /conversations/:conversationId/messages
+POST /messages
 Content-Type: application/json
 
 {
@@ -309,6 +338,8 @@ Content-Type: application/json
 }
 ```
 
+**Note:** The application uses a single hardcoded conversation (`default-conversation`). All messages are stored and retrieved under this conversation ID.
+
 #### Upload File
 
 ```http
@@ -334,15 +365,73 @@ file: [binary data]
 }
 ```
 
+#### Generate Image
+
+```http
+POST /images/generate
+Content-Type: application/json
+
+{
+  "prompt": "A beautiful sunset over mountains",
+  "size": "1024x1024"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "imageUrl": "data:image/png;base64,...",
+    "revisedPrompt": "A serene sunset painting with orange and purple sky over mountain peaks"
+  }
+}
+```
+
+#### Describe Image
+
+```http
+POST /images/describe
+Content-Type: application/json
+
+{
+  "imageUrl": "data:image/png;base64,...",
+  "question": "What do you see in this image?"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "description": "I can see a beautiful sunset over mountain peaks..."
+  }
+}
+```
+
 ## Architecture
+
+### AI Service Abstraction
+
+The application uses a service abstraction layer for AI operations:
+
+- **Text Chat**: Uses GPT-3.5-turbo or GPT-4
+- **Image Generation**: Uses DALL-E 3 with automatic prompt revision
+- **Image Description**: Uses GPT-4 Vision for analyzing uploaded images
 
 ### Message Flow
 
 1. **User sends message** with optional file attachments
 2. **Backend saves user message** to MongoDB
-3. **Backend collects conversation history**
-4. **Backend extracts text** from uploaded files (if applicable)
-5. **Backend calls OpenAI API** with message + context + extracted text
+3. **Backend detects AI mode** based on content and attachments
+4. **Backend collects conversation history**
+5. **Backend processes based on mode**:
+   - Text: Extract text from files, call GPT
+   - Image Gen: Call DALL-E 3
+   - Image Desc: Call GPT-4 Vision with image
 6. **Backend saves assistant response** with metadata
 7. **Backend returns both messages** to frontend
 8. **Frontend displays messages** with auto-scroll
@@ -352,7 +441,7 @@ file: [binary data]
 - **TXT/MD**: Direct file read
 - **PDF**: Uses `pdf-parse` library
 - **DOCX**: Uses `mammoth` library
-- **Images**: Metadata only (future: vision API support)
+- **Images**: Metadata only + GPT-4 Vision description
 
 ### Data Models
 
@@ -391,6 +480,29 @@ file: [binary data]
   createdAt: Date
 }
 ```
+
+## UI Components
+
+### Custom Icons
+
+The application uses custom SVG icons located in `frontend/src/assets/`:
+
+- **icon-navigation.svg**: Navigation and logo icon
+- **loading-icon.svg**: Custom spinning loading animation
+
+### Animations
+
+CSS animations are defined in `frontend/src/index.css`:
+
+```css
+.animate-spin-slow {
+  animation: spin 0.75s ease-in-out infinite;
+}
+```
+
+### Typography
+
+The application uses Inter font family for consistent typography across the interface.
 
 ## Development
 
@@ -478,6 +590,18 @@ Access to XMLHttpRequest blocked by CORS policy
 - Check `VITE_API_URL` in frontend `.env`
 - Ensure CORS middleware is configured in backend
 
+### Image Generation Fails
+
+```
+Error: Failed to generate image
+```
+
+**Solution:**
+
+- Verify OpenAI API key has DALL-E 3 access
+- Check prompt is not violating content policies
+- Ensure you have sufficient API credits
+
 ## Project Assumptions
 
 1. **Single User**: Application designed for one anonymous user
@@ -485,9 +609,10 @@ Access to XMLHttpRequest blocked by CORS policy
 3. **No Authentication**: No user login required
 4. **No Streaming**: AI responses returned complete (not streamed)
 5. **Local File Storage**: Files stored on server filesystem
-6. **OpenAI Required**: Real OpenAI API key required (no mock service)
+6. **OpenAI Required**: Real OpenAI API key required
 7. **Modern Browsers**: Supports latest Chrome, Firefox, Safari, Edge
 8. **Text Extraction**: Only txt, md, pdf, docx files have text extracted
+9. **Smart Mode Detection**: AI mode automatically detected from keywords and attachment types
 
 ## Limitations
 
@@ -498,41 +623,17 @@ Access to XMLHttpRequest blocked by CORS policy
 - No mobile app
 - No voice input
 - No markdown rendering in messages
-- No code syntax highlighting
-- Images not analyzed by AI (metadata only)
-- No cloud storage integration
+- Image generation requires sufficient OpenAI credits
 
 ## Future Enhancements
 
-- [ ] Multiple conversation support
-- [ ] User authentication
-- [ ] Real-time updates with WebSocket
-- [ ] Streaming AI responses
-- [ ] Message editing/deletion
-- [ ] Conversation search
+- [ ] Streaming responses for faster UX
 - [ ] Dark mode toggle
-- [ ] Voice input
-- [ ] Markdown support
-- [ ] Code syntax highlighting
-- [ ] Image analysis with vision API
-- [ ] Cloud storage (S3, Cloudinary)
-- [ ] Export conversation history
-- [ ] Mobile responsive improvements
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Support
-
-For issues or questions:
-
-- Check the troubleshooting section
-- Review the architecture documentation in `plans/`
-- Open an issue on GitHub
-
----
-
-**Built with ❤️ using React, TypeScript, Node.js, MongoDB, and OpenAI**
-
-Last Updated: March 26, 2026
+- [ ] Multiple conversations with sidebar navigation
+- [ ] Message editing and deletion
+- [ ] Markdown rendering in chat messages
+- [ ] Mobile responsive design
+- [ ] Conversation search functionality
+- [ ] Export conversation to PDF/HTML
+- [ ] Voice input with speech recognition
+- [ ] Custom AI model selection (Claude, Gemini, etc.)

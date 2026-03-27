@@ -1,15 +1,19 @@
-import apiClient from './client';
-import { Message, SendMessageData } from '../types';
+import apiClient from "./client";
+import { Message, SendMessageData } from "../types";
 
-export async function getMessages(conversationId: string): Promise<{ messages: Message[] }> {
-  return apiClient.get(`/conversations/${conversationId}/messages`);
+export async function getMessages(): Promise<{ messages: Message[] }> {
+  const response = await apiClient.get("/messages");
+  return response.data;
 }
 
 export async function sendMessage(
-  conversationId: string,
-  data: SendMessageData
+  data: SendMessageData,
 ): Promise<{ userMessage: Message; assistantMessage: Message }> {
-  return apiClient.post(`/conversations/${conversationId}/messages`, data);
+  const response = await apiClient.post("/messages", data);
+  return {
+    userMessage: response.data.userMessage,
+    assistantMessage: response.data.assistantMessage,
+  };
 }
 
 export default { getMessages, sendMessage };

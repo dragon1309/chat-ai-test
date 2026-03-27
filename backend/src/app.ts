@@ -2,9 +2,9 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import config from "./config/environment";
-import conversationsRouter from "./routes/conversations";
 import messagesRouter from "./routes/messages";
 import uploadsRouter from "./routes/uploads";
+import imagesRouter from "./routes/images";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
@@ -21,9 +21,9 @@ app.use(
 );
 
 // Routes
-app.use("/api/conversations", conversationsRouter);
-app.use("/api/conversations", messagesRouter);
+app.use("/api/messages", messagesRouter);
 app.use("/api/uploads", uploadsRouter);
+app.use("/api/images", imagesRouter);
 
 // Health check
 app.get("/health", (req, res) => {

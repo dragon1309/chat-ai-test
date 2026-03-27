@@ -468,6 +468,16 @@ function MessageBubble({ message }: { message: Message }) {
           </div>
         )}
         <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
+        {/* <div
+          className={`mt-2 text-xs ${
+            isUser ? "text-indigo-200" : "text-gray-400"
+          }`}
+        >
+          {new Date(message.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </div> */}
       </div>
     </div>
   );
