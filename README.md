@@ -2,7 +2,7 @@
 
 A fullstack AI chat application built with React, TypeScript, Node.js, Express, MongoDB, and OpenAI. Features a clean UI inspired by Template.net with support for file uploads, text extraction, image generation, image description, and persistent chat history.
 
-![Template.net Style Chat Interface](https://via.placeholder.com/800x400?text=AI+Chat+Module)
+![Template.net Style Chat Interface](https://www.template.net/assets/icons/new-logo-1.svg)
 
 ## Features
 
